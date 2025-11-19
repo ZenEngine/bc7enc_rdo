@@ -1,6 +1,6 @@
+cmake_minimum_required(VERSION 3.11)
 project(bc7enc)
 
-cmake_minimum_required(VERSION 2.8)
 option(BUILD_X64 "build 64-bit" TRUE)
 option(SUPPORT_BC7E "support BC7E (requires ispc)" FALSE)
 
