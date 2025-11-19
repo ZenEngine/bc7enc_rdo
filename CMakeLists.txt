@@ -1,5 +1,5 @@
 ﻿cmake_minimum_required(VERSION 3.11)
-project(bc7enc)
+project(bc7enc LANGUAGES C CXX)
 
 option(BUILD_X64 "build 64-bit" TRUE)
 option(SUPPORT_BC7E "support BC7E (requires ispc)" FALSE)
@@ -35,13 +35,18 @@ else()
 endif()
 
 if (SUPPORT_BC7E)
+    find_program(ISPC_EXECUTABLE ispc)
+    if(NOT ISPC_EXECUTABLE)
+        message(FATAL_ERROR "SUPPORT_BC7E is ON but 'ispc' was not found in PATH")
+    endif()
+
 	if (NOT MSVC)
 		add_custom_command(OUTPUT ${CMAKE_SOURCE_DIR}/bc7e.o ${CMAKE_SOURCE_DIR}/bc7e_avx.o ${CMAKE_SOURCE_DIR}/bc7e_sse2.o ${CMAKE_SOURCE_DIR}/bc7e_sse4.o ${CMAKE_SOURCE_DIR}/bc7e_avx2.o
-			COMMAND ispc -g -O2 ${CMAKE_SOURCE_DIR}/bc7e.ispc -o ${CMAKE_SOURCE_DIR}/bc7e.o -h ${CMAKE_SOURCE_DIR}/bc7e_ispc.h --target=sse2,sse4,avx,avx2 --opt=fast-math --opt=disable-assertions
+			COMMAND ${ISPC_EXECUTABLE} -g -O2 ${CMAKE_SOURCE_DIR}/bc7e.ispc -o ${CMAKE_SOURCE_DIR}/bc7e.o -h ${CMAKE_SOURCE_DIR}/include/bc7e_ispc.h --target=sse2,sse4,avx,avx2 --opt=fast-math --opt=disable-assertions
 										 	DEPENDS bc7e.ispc)
 	else()
 		add_custom_command(OUTPUT ${CMAKE_SOURCE_DIR}/bc7e.obj ${CMAKE_SOURCE_DIR}/bc7e_avx.obj ${CMAKE_SOURCE_DIR}/bc7e_sse2.obj ${CMAKE_SOURCE_DIR}/bc7e_sse4.obj ${CMAKE_SOURCE_DIR}/bc7e_avx2.obj
-			COMMAND ispc -g -O2 ${CMAKE_SOURCE_DIR}/bc7e.ispc -o ${CMAKE_SOURCE_DIR}/bc7e.obj -h ${CMAKE_SOURCE_DIR}/bc7e_ispc.h --target=sse2,sse4,avx,avx2 --opt=fast-math --opt=disable-assertions
+			COMMAND ${ISPC_EXECUTABLE} -g -O2 ${CMAKE_SOURCE_DIR}/bc7e.ispc -o ${CMAKE_SOURCE_DIR}/bc7e.obj -h ${CMAKE_SOURCE_DIR}/include/bc7e_ispc.h --target=sse2,sse4,avx,avx2 --opt=fast-math --opt=disable-assertions
 										 	DEPENDS bc7e.ispc)
 	endif()
 endif()
@@ -76,7 +81,6 @@ set(BC7ENC_SRC_LIST  ${COMMON_SRC_LIST}
     "${CMAKE_CURRENT_SOURCE_DIR}/src/utils.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/ert.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/rdo_bc_encoder.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/bc7e.ispc"
 )
 
 set(BC7ENC_HEADER_LIST
@@ -107,6 +111,10 @@ if (NOT MSVC)
 	target_link_libraries(bc7enc m)
 endif()
 
+set_target_properties(bc7enc PROPERTIES
+    PUBLIC_HEADER "${BC7ENC_HEADER_LIST}"
+)
+
 target_include_directories(bc7enc PUBLIC
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 	$<INSTALL_INTERFACE:include>
@@ -116,7 +124,9 @@ install(TARGETS bc7enc
         EXPORT bc7enc-export
         ARCHIVE DESTINATION lib
         LIBRARY DESTINATION lib
-        RUNTIME DESTINATION bin)
+        RUNTIME DESTINATION bin
+		INCLUDES DESTINATION include
+        PUBLIC_HEADER DESTINATION include/bc7enc)
 
 install(EXPORT bc7enc-export
     FILE bc7enc-config.cmake
