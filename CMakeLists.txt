@@ -1,5 +1,8 @@
 ﻿cmake_minimum_required(VERSION 3.11)
-project(bc7enc LANGUAGES C CXX)
+
+set(BC7ENC_VERSION 1.0.0)
+
+project(Bc7Enc VERSION ${BC7ENC_VERSION} LANGUAGES C CXX)
 
 option(BUILD_X64 "build 64-bit" TRUE)
 option(SUPPORT_BC7E "support BC7E (requires ispc)" FALSE)
@@ -98,37 +101,51 @@ set(BC7ENC_HEADER_LIST
 )
 
 if (NOT SUPPORT_BC7E)
-		add_library(bc7enc ${BC7ENC_SRC_LIST} ${BC7ENC_HEADER_LIST})
+		add_library(Bc7Enc ${BC7ENC_SRC_LIST} ${BC7ENC_HEADER_LIST})
 else()
 	if (NOT MSVC)
-		add_library(bc7enc ${BC7ENC_SRC_LIST} ${BC7ENC_HEADER_LIST} ${CMAKE_SOURCE_DIR}/bc7e.o ${CMAKE_SOURCE_DIR}/bc7e_avx.o ${CMAKE_SOURCE_DIR}/bc7e_avx2.o ${CMAKE_SOURCE_DIR}/bc7e_sse2.o ${CMAKE_SOURCE_DIR}/bc7e_sse4.o)
+		add_library(Bc7Enc ${BC7ENC_SRC_LIST} ${BC7ENC_HEADER_LIST} ${CMAKE_SOURCE_DIR}/bc7e.o ${CMAKE_SOURCE_DIR}/bc7e_avx.o ${CMAKE_SOURCE_DIR}/bc7e_avx2.o ${CMAKE_SOURCE_DIR}/bc7e_sse2.o ${CMAKE_SOURCE_DIR}/bc7e_sse4.o)
 	else()
-		add_library(bc7enc ${BC7ENC_SRC_LIST} ${BC7ENC_HEADER_LIST} ${CMAKE_SOURCE_DIR}/bc7e.obj ${CMAKE_SOURCE_DIR}/bc7e_avx.obj ${CMAKE_SOURCE_DIR}/bc7e_avx2.obj ${CMAKE_SOURCE_DIR}/bc7e_sse2.obj ${CMAKE_SOURCE_DIR}/bc7e_sse4.obj)
+		add_library(Bc7Enc ${BC7ENC_SRC_LIST} ${BC7ENC_HEADER_LIST} ${CMAKE_SOURCE_DIR}/bc7e.obj ${CMAKE_SOURCE_DIR}/bc7e_avx.obj ${CMAKE_SOURCE_DIR}/bc7e_avx2.obj ${CMAKE_SOURCE_DIR}/bc7e_sse2.obj ${CMAKE_SOURCE_DIR}/bc7e_sse4.obj)
 	endif()
 endif()
 
 if (NOT MSVC)
-	target_link_libraries(bc7enc m)
+	target_link_libraries(Bc7Enc m)
 endif()
 
-set_target_properties(bc7enc PROPERTIES
+set_target_properties(Bc7Enc PROPERTIES
     PUBLIC_HEADER "${BC7ENC_HEADER_LIST}"
 )
 
-target_include_directories(bc7enc PUBLIC
+target_include_directories(Bc7Enc PUBLIC
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 	$<INSTALL_INTERFACE:include>
 )
 
-install(TARGETS bc7enc
-        EXPORT bc7enc-export
+install(TARGETS Bc7Enc
+        EXPORT Bc7EncTargets
         ARCHIVE DESTINATION lib
         LIBRARY DESTINATION lib
         RUNTIME DESTINATION bin
 		INCLUDES DESTINATION include
         PUBLIC_HEADER DESTINATION include/bc7enc)
 
-install(EXPORT bc7enc-export
-    FILE bc7enc-config.cmake
-    DESTINATION share/cmake/bc7enc/
-    EXPORT_LINK_INTERFACE_LIBRARIES)
+install(EXPORT Bc7EncTargets
+    FILE Bc7EncTargets.cmake
+	NAMESPACE Bc7Enc::
+    DESTINATION share/cmake/bc7enc)
+
+include(CMakePackageConfigHelpers)
+
+configure_package_config_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Config.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/Bc7EncConfig.cmake"
+    INSTALL_DESTINATION lib/cmake/bc7enc
+)
+
+write_basic_package_version_file(
+    "${CMAKE_CURRENT_BINARY_DIR}/Bc7EncConfigVersion.cmake"
+    VERSION ${PROJECT_VERSION}
+    COMPATIBILITY AnyNewerVersion
+)
