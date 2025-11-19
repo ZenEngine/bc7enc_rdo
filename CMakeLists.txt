@@ -136,6 +136,7 @@ install(EXPORT Bc7EncTargets
 	NAMESPACE Bc7Enc::
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/Bc7Enc)
 
+include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 
 configure_package_config_file(
