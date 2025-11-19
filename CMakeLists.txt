@@ -1,5 +1,5 @@
 ﻿cmake_minimum_required(VERSION 3.11)
-project(bc7enc)
+project(bc7enc LANGUAGES C CXX)
 
 option(BUILD_X64 "build 64-bit" TRUE)
 option(SUPPORT_BC7E "support BC7E (requires ispc)" FALSE)
@@ -35,13 +35,18 @@ else()
 endif()
 
 if (SUPPORT_BC7E)
+    find_program(ISPC_EXECUTABLE ispc)
+    if(NOT ISPC_EXECUTABLE)
+        message(FATAL_ERROR "SUPPORT_BC7E is ON but 'ispc' was not found in PATH")
+    endif()
+
 	if (NOT MSVC)
 		add_custom_command(OUTPUT ${CMAKE_SOURCE_DIR}/bc7e.o ${CMAKE_SOURCE_DIR}/bc7e_avx.o ${CMAKE_SOURCE_DIR}/bc7e_sse2.o ${CMAKE_SOURCE_DIR}/bc7e_sse4.o ${CMAKE_SOURCE_DIR}/bc7e_avx2.o
-			COMMAND ispc -g -O2 ${CMAKE_SOURCE_DIR}/bc7e.ispc -o ${CMAKE_SOURCE_DIR}/bc7e.o -h ${CMAKE_SOURCE_DIR}/bc7e_ispc.h --target=sse2,sse4,avx,avx2 --opt=fast-math --opt=disable-assertions
+			COMMAND ${ISPC_EXECUTABLE} -g -O2 ${CMAKE_SOURCE_DIR}/bc7e.ispc -o ${CMAKE_SOURCE_DIR}/bc7e.o -h ${CMAKE_SOURCE_DIR}/include/bc7e_ispc.h --target=sse2,sse4,avx,avx2 --opt=fast-math --opt=disable-assertions
 										 	DEPENDS bc7e.ispc)
 	else()
 		add_custom_command(OUTPUT ${CMAKE_SOURCE_DIR}/bc7e.obj ${CMAKE_SOURCE_DIR}/bc7e_avx.obj ${CMAKE_SOURCE_DIR}/bc7e_sse2.obj ${CMAKE_SOURCE_DIR}/bc7e_sse4.obj ${CMAKE_SOURCE_DIR}/bc7e_avx2.obj
-			COMMAND ispc -g -O2 ${CMAKE_SOURCE_DIR}/bc7e.ispc -o ${CMAKE_SOURCE_DIR}/bc7e.obj -h ${CMAKE_SOURCE_DIR}/bc7e_ispc.h --target=sse2,sse4,avx,avx2 --opt=fast-math --opt=disable-assertions
+			COMMAND ${ISPC_EXECUTABLE} -g -O2 ${CMAKE_SOURCE_DIR}/bc7e.ispc -o ${CMAKE_SOURCE_DIR}/bc7e.obj -h ${CMAKE_SOURCE_DIR}/include/bc7e_ispc.h --target=sse2,sse4,avx,avx2 --opt=fast-math --opt=disable-assertions
 										 	DEPENDS bc7e.ispc)
 	endif()
 endif()
@@ -67,36 +72,38 @@ endif()
 set(CMAKE_CXX_FLAGS_RELEASE  "${CMAKE_CXX_FLAGS_RELEASE} ${GCC_COMPILE_FLAGS}")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} ${GCC_COMPILE_FLAGS} -D_DEBUG")
 
-set (BC7ENC_SRC_LIST ${COMMON_SRC_LIST}
-	bc7enc.cpp
-	bc7enc.h
-	bc7decomp.cpp
-	bc7decomp_ref.cpp
-	bc7decomp.h
-	lodepng.cpp	
-	lodepng.h
-	rgbcx.cpp
-	rgbcx.h
-	rgbcx_table4.h
-	rgbcx_table4_small.h
-	utils.cpp
-	utils.h
-	miniz.h
-	dds_defs.h
-	ert.cpp
-	ert.h
-	rdo_bc_encoder.cpp
-	rdo_bc_encoder.h
-	bc7e.ispc
-	)
+set(BC7ENC_SRC_LIST  ${COMMON_SRC_LIST}
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/bc7enc.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/bc7decomp.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/bc7decomp_ref.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/lodepng.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/rgbcx.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/utils.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/ert.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/rdo_bc_encoder.cpp"
+)
+
+set(BC7ENC_HEADER_LIST
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/bc7enc/bc7enc.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/bc7enc/bc7decomp.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/bc7enc/lodepng.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/bc7enc/rgbcx.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/bc7enc/rgbcx_table4.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/bc7enc/rgbcx_table4_small.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/bc7enc/utils.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/bc7enc/miniz.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/bc7enc/dds_defs.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/bc7enc/ert.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/bc7enc/rdo_bc_encoder.h"
+)
 
 if (NOT SUPPORT_BC7E)
-		add_library(bc7enc ${BC7ENC_SRC_LIST})
+		add_library(bc7enc ${BC7ENC_SRC_LIST} ${BC7ENC_HEADER_LIST})
 else()
 	if (NOT MSVC)
-		add_library(bc7enc ${BC7ENC_SRC_LIST} ${CMAKE_SOURCE_DIR}/bc7e.o ${CMAKE_SOURCE_DIR}/bc7e_avx.o ${CMAKE_SOURCE_DIR}/bc7e_avx2.o ${CMAKE_SOURCE_DIR}/bc7e_sse2.o ${CMAKE_SOURCE_DIR}/bc7e_sse4.o)
+		add_library(bc7enc ${BC7ENC_SRC_LIST} ${BC7ENC_HEADER_LIST} ${CMAKE_SOURCE_DIR}/bc7e.o ${CMAKE_SOURCE_DIR}/bc7e_avx.o ${CMAKE_SOURCE_DIR}/bc7e_avx2.o ${CMAKE_SOURCE_DIR}/bc7e_sse2.o ${CMAKE_SOURCE_DIR}/bc7e_sse4.o)
 	else()
-		add_library(bc7enc ${BC7ENC_SRC_LIST} ${CMAKE_SOURCE_DIR}/bc7e.obj ${CMAKE_SOURCE_DIR}/bc7e_avx.obj ${CMAKE_SOURCE_DIR}/bc7e_avx2.obj ${CMAKE_SOURCE_DIR}/bc7e_sse2.obj ${CMAKE_SOURCE_DIR}/bc7e_sse4.obj)
+		add_library(bc7enc ${BC7ENC_SRC_LIST} ${BC7ENC_HEADER_LIST} ${CMAKE_SOURCE_DIR}/bc7e.obj ${CMAKE_SOURCE_DIR}/bc7e_avx.obj ${CMAKE_SOURCE_DIR}/bc7e_avx2.obj ${CMAKE_SOURCE_DIR}/bc7e_sse2.obj ${CMAKE_SOURCE_DIR}/bc7e_sse4.obj)
 	endif()
 endif()
 
@@ -104,4 +111,24 @@ if (NOT MSVC)
 	target_link_libraries(bc7enc m)
 endif()
 
+set_target_properties(bc7enc PROPERTIES
+    PUBLIC_HEADER "${BC7ENC_HEADER_LIST}"
+)
 
+target_include_directories(bc7enc PUBLIC
+	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+	$<INSTALL_INTERFACE:include>
+)
+
+install(TARGETS bc7enc
+        EXPORT bc7enc-export
+        ARCHIVE DESTINATION lib
+        LIBRARY DESTINATION lib
+        RUNTIME DESTINATION bin
+		INCLUDES DESTINATION include
+        PUBLIC_HEADER DESTINATION include/bc7enc)
+
+install(EXPORT bc7enc-export
+    FILE bc7enc-config.cmake
+    DESTINATION share/cmake/bc7enc/
+    EXPORT_LINK_INTERFACE_LIBRARIES)
