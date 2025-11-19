@@ -134,14 +134,14 @@ install(TARGETS Bc7Enc
 install(EXPORT Bc7EncTargets
     FILE Bc7EncTargets.cmake
 	NAMESPACE Bc7Enc::
-    DESTINATION share/cmake/bc7enc)
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/Bc7Enc)
 
 include(CMakePackageConfigHelpers)
 
 configure_package_config_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Config.cmake.in"
     "${CMAKE_CURRENT_BINARY_DIR}/Bc7EncConfig.cmake"
-    INSTALL_DESTINATION lib/cmake/bc7enc
+    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/Bc7Enc
 )
 
 write_basic_package_version_file(
