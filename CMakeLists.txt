@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.11)
+﻿cmake_minimum_required(VERSION 3.11)
 project(bc7enc)
 
 option(BUILD_X64 "build 64-bit" TRUE)
@@ -75,7 +75,6 @@ set (BC7ENC_SRC_LIST ${COMMON_SRC_LIST}
 	bc7decomp.h
 	lodepng.cpp	
 	lodepng.h
-	test.cpp
 	rgbcx.cpp
 	rgbcx.h
 	rgbcx_table4.h
@@ -92,12 +91,12 @@ set (BC7ENC_SRC_LIST ${COMMON_SRC_LIST}
 	)
 
 if (NOT SUPPORT_BC7E)
-		add_executable(bc7enc ${BC7ENC_SRC_LIST})
+		add_library(bc7enc ${BC7ENC_SRC_LIST})
 else()
 	if (NOT MSVC)
-		add_executable(bc7enc ${BC7ENC_SRC_LIST} ${CMAKE_SOURCE_DIR}/bc7e.o ${CMAKE_SOURCE_DIR}/bc7e_avx.o ${CMAKE_SOURCE_DIR}/bc7e_avx2.o ${CMAKE_SOURCE_DIR}/bc7e_sse2.o ${CMAKE_SOURCE_DIR}/bc7e_sse4.o)
+		add_library(bc7enc ${BC7ENC_SRC_LIST} ${CMAKE_SOURCE_DIR}/bc7e.o ${CMAKE_SOURCE_DIR}/bc7e_avx.o ${CMAKE_SOURCE_DIR}/bc7e_avx2.o ${CMAKE_SOURCE_DIR}/bc7e_sse2.o ${CMAKE_SOURCE_DIR}/bc7e_sse4.o)
 	else()
-		add_executable(bc7enc ${BC7ENC_SRC_LIST} ${CMAKE_SOURCE_DIR}/bc7e.obj ${CMAKE_SOURCE_DIR}/bc7e_avx.obj ${CMAKE_SOURCE_DIR}/bc7e_avx2.obj ${CMAKE_SOURCE_DIR}/bc7e_sse2.obj ${CMAKE_SOURCE_DIR}/bc7e_sse4.obj)
+		add_library(bc7enc ${BC7ENC_SRC_LIST} ${CMAKE_SOURCE_DIR}/bc7e.obj ${CMAKE_SOURCE_DIR}/bc7e_avx.obj ${CMAKE_SOURCE_DIR}/bc7e_avx2.obj ${CMAKE_SOURCE_DIR}/bc7e_sse2.obj ${CMAKE_SOURCE_DIR}/bc7e_sse4.obj)
 	endif()
 endif()
 
