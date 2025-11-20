@@ -123,30 +123,39 @@ target_include_directories(Bc7Enc PUBLIC
 	$<INSTALL_INTERFACE:include>
 )
 
+include(GNUInstallDirs)
+
 install(TARGETS Bc7Enc
         EXPORT Bc7EncTargets
-        ARCHIVE DESTINATION lib
-        LIBRARY DESTINATION lib
-        RUNTIME DESTINATION bin
+        ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+        LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+        RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
 		INCLUDES DESTINATION include
         PUBLIC_HEADER DESTINATION include/bc7enc)
 
 install(EXPORT Bc7EncTargets
-    FILE Bc7EncTargets.cmake
-	NAMESPACE Bc7Enc::
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/Bc7Enc)
+    FILE ${PROJECT_NAME}Targets.cmake
+	NAMESPACE ${PROJECT_NAME}::
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}
+)
 
-include(GNUInstallDirs)
+set(CONFIG_FILE_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}")
 include(CMakePackageConfigHelpers)
 
 configure_package_config_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Config.cmake.in"
-    "${CMAKE_CURRENT_BINARY_DIR}/Bc7EncConfig.cmake"
-    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/Bc7Enc
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/${PROJECT_NAME}Config.cmake.in
+    ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
+    INSTALL_DESTINATION ${CONFIG_FILE_INSTALL_DIR}
 )
 
 write_basic_package_version_file(
-    "${CMAKE_CURRENT_BINARY_DIR}/Bc7EncConfigVersion.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
     VERSION ${PROJECT_VERSION}
     COMPATIBILITY AnyNewerVersion
+)
+
+install(FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/${PROJECT_NAME}Config.cmake"
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}
 )
